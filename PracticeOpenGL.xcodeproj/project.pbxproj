@@ -333,6 +333,7 @@
 		77D96E2D1F7501A600D6C0FF /* vec4.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vec4.hpp; sourceTree = "<group>"; };
 		77D96E2E1F7501A600D6C0FF /* vector_relational.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vector_relational.hpp; sourceTree = "<group>"; };
 		77D96E2F1F7501BE00D6C0FF /* libassimp.4.0.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libassimp.4.0.1.dylib; path = ../../../../usr/local/Cellar/assimp/4.0.1/lib/libassimp.4.0.1.dylib; sourceTree = "<group>"; };
+		77D9A34B1F7814AD0087CDBF /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -381,6 +382,7 @@
 		77D96D0E1F7500FE00D6C0FF = {
 			isa = PBXGroup;
 			children = (
+				77D9A34B1F7814AD0087CDBF /* .gitignore */,
 				77D96D191F7500FE00D6C0FF /* PracticeOpenGL */,
 				77D96D181F7500FE00D6C0FF /* Products */,
 				77D96D211F75015300D6C0FF /* Frameworks */,

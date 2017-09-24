@@ -3,37 +3,39 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <vector>
 using namespace std;
 
+#define GLEW_STATIC
 #include <GL/glew.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include "resources.h"
 #include "util.h"
 
 class Shader {
 public:
-    GLuint Program;
-    
-    Shader(const GLchar *vertexPath, const GLchar *fragmentPath) {
-        this->Program = glCreateProgram();
+    static GLuint LoadShader(const GLchar *vertexPath, const GLchar *fragmentPath) {
+        GLuint program = glCreateProgram();
         
-        const GLchar *vertCode = LoadShaderFile(vertexPath);
-        GLuint vertex = CompileShaderCode(vertCode, GL_VERTEX_SHADER);
-        glAttachShader(this->Program, vertex);
+        string vertCode = LoadShaderFile(vertexPath);
+        GLuint vertex = CompileShaderCode(vertCode.c_str(), GL_VERTEX_SHADER);
+        glAttachShader(program, vertex);
         
-        const GLchar *fragCode = LoadShaderFile(fragmentPath);
-        GLuint fragment = CompileShaderCode(fragCode, GL_FRAGMENT_SHADER);
-        glAttachShader(this->Program, fragment);
+        string fragCode = LoadShaderFile(fragmentPath);
+        GLuint fragment = CompileShaderCode(fragCode.c_str(), GL_FRAGMENT_SHADER);
+        glAttachShader(program, fragment);
         
-        LinkProgram();
+        LinkProgram(program);
         glDeleteShader(vertex);
         glDeleteShader(fragment);
-    }
-    
-    void Use( ) {
-        glUseProgram(this->Program);
+        return program;
     }
     
 private:
-    const GLchar * LoadShaderFile (const GLchar *filePath) {
+    static string LoadShaderFile (const GLchar *filePath) {
         ifstream shaderFile(filePath);
         stringstream shaderStream("");
         
@@ -42,18 +44,16 @@ private:
             return "";
         }
         
-        string code = "";
-        string line = "";
+        string content = "", line = "";
         while(!shaderFile.eof()) {
             getline(shaderFile, line);
-            code.append(line + "\n");
-            //shaderStream << line << '\n';
+            content.append(line + "\n");
         }
         shaderFile.close();
-        return code.c_str();
+        return content;
     }
     
-    GLint CompileShaderCode(const GLchar *code, const GLenum shaderType) {
+    static GLint CompileShaderCode(const GLchar *code, const GLenum shaderType) {
         GLint success;
         GLchar infoLog[512];
         GLuint result = glCreateShader(shaderType);
@@ -68,14 +68,63 @@ private:
         return result;
     }
     
-    void LinkProgram() {
+    static void LinkProgram(GLuint program) {
         GLint success;
         GLchar infoLog[512];
-        glLinkProgram(this->Program);
-        glGetProgramiv(this->Program, GL_LINK_STATUS, &success);
+        glLinkProgram(program);
+        glGetProgramiv(program, GL_LINK_STATUS, &success);
         if (!success) {
-            glGetProgramInfoLog( this->Program, 512, NULL, infoLog );
+            glGetProgramInfoLog(program, 512, NULL, infoLog);
             Debug::LogError("<Shader> linking failed: " + string(infoLog));
+        }
+    }
+};
+
+class Material {
+    GLuint program;
+    
+public:
+    vector<Texture> textures;
+
+    Material (GLuint program) {
+        this->program = program;
+    }
+    
+    Material (GLuint program, vector<Texture> textures) {
+        this->program = program;
+        this->textures = textures;
+    }
+    
+    void AddTexture(GLuint textureName, GLenum textureType) {
+        Texture textureData;
+        textureData.name = textureName;
+        textureData.type = textureType;
+        this->textures.push_back(textureData);
+    }
+    
+    void UseProgram(GLuint program) {
+        this->program = program;
+        glUseProgram(this->program);
+    }
+    
+    void SetProperty (glm::mat4 projection, glm::mat4 view, glm::mat4 model) {
+        glUniformMatrix4fv(glGetUniformLocation(this->program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(this->program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(this->program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    }
+    
+    void BindTextures () {
+        for (int i = 0; i < this->textures.size(); i++) {
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(this->textures[i].type, this->textures[i].name);
+            glUniform1i(glGetUniformLocation(this->program, "texture" + i ), i);
+        }
+    }
+    
+    void UnbindTextures () {
+        for (int i = 0; i < this->textures.size(); i++) {
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(this->textures[i].type, 0);
         }
     }
 };

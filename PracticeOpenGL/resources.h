@@ -6,6 +6,11 @@
 #include "SOIL2/SOIL2.h"
 #include "util.h"
 
+struct Texture {
+    GLuint name;
+    GLenum type;
+};
+
 class Resources {
 public:
     static GLuint LoadTexture(GLchar *path) {

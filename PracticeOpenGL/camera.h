@@ -10,7 +10,6 @@
 #include "util.h"
 
 class Camera {
-private:
     glm::vec3 position;
     glm::vec3 forward;
     glm::vec3 up;
