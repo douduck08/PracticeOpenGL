@@ -4,6 +4,7 @@
 //
 
 #include <iostream>
+#include <vector>
 using namespace std;
 
 #define GLEW_STATIC
@@ -15,6 +16,7 @@ using namespace std;
 
 #include "camera.h"
 #include "resources.h"
+#include "render_texture.h"
 #include "material.h"
 #include "mesh.h"
 #include "util.h"
@@ -22,7 +24,7 @@ using namespace std;
 const char *TITLE = "Practice OpenGL";
 const GLint WIDTH = 800, HEIGHT = 600;
 
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 1.0f, 3.0f));
 const glm::vec3 FORWARD (0.0f, 0.0f, -1.0f);
 const glm::vec3 UP (0.0f, 1.0f, 0.0f);
 const glm::vec3 RIGHT (1.0f, 0.0f, 0.0f);
@@ -63,23 +65,45 @@ int main(int argc, const char * argv[]) {
     //glEnable( GL_BLEND );
     //glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     
     Mesh planeMesh = MeshGenerator::GeneratePlane();
     Mesh spheremesh = MeshGenerator::GenerateSphere();
     Mesh cubeMesh = MeshGenerator::GenerateCube();
-    GLuint textureShader = Shader::LoadShader("resources/shaders/texture.vert", "resources/shaders/texture.frag");
-    Material uvMaterial(textureShader);
-    uvMaterial.AddTexture(Resources::LoadTexture("resources/images/uv_diag.png"), GL_TEXTURE_2D);
-    Material grayMaterial(textureShader);
-    grayMaterial.AddTexture(Resources::LoadTexture("resources/images/border.png"), GL_TEXTURE_2D);
-
+    
+    GLuint stdShader = Shader::LoadShader("resources/shaders/standard.vert", "resources/shaders/standard.frag");
+    Material stdMaterial(stdShader);
+    //stdMaterial.AddTexture(Resources::LoadTexture("resources/images/uv_diag.png"), GL_TEXTURE_2D);
+    stdMaterial.AddTexture(Resources::LoadTexture("resources/images/white.png"), GL_TEXTURE_2D);
+    
+    RenderTexture renderTexture(WIDTH, HEIGHT, screenWidth, screenHeight);
+    GLuint baseShader = Shader::LoadShader("resources/shaders/base.vert", "resources/shaders/base.frag");
+    Material baseMaterial(baseShader);
+    baseMaterial.AddTexture(renderTexture.textureName, GL_TEXTURE_2D);
+    
+    glm::mat4 model[6], view, projection;
+    projection = camera.GetProjectionMatrix(screenWidth, screenHeight);
+    
+    model[0] = glm::mat4();
+    model[1] = glm::mat4();
+    model[1] = glm::translate(model[1], glm::vec3(-1.2f, 0.f, -1.f));
+    model[1] = glm::rotate(model[1], (GLfloat)M_PI * .25f, glm::vec3(0.f, 1.f, 0.f));
+    model[2] = glm::mat4();
+    model[2] = glm::translate(model[2], glm::vec3(0.f, 1.f, 0.f));
+    model[3] = glm::mat4();
+    model[3] = glm::translate(model[3], glm::vec3(1.2f, 0.f, 0.f));
+    model[4] = glm::mat4();
+    model[4] = glm::translate(model[4], glm::vec3(0.f, -.5f, 0.f));
+    model[4] = glm::rotate(model[4], (GLfloat)M_PI * -.5f, glm::vec3(1.f, 0.f, 0.f));
+    model[4] = glm::scale(model[4], glm::vec3(5.f, 5.f, 5.f));
+    model[5] = glm::mat4();
+    model[5] = glm::translate(model[5], glm::vec3(0.f, 3.5f, -5.f));
+    model[5] = glm::scale(model[5], glm::vec3(4.f, 3.f, 4.f));
+    
     // Game Loop
     GLfloat deltaTime = 0.0f;
     GLfloat lastFrame = 0.0f;
-    glm::mat4 model, view, projection;
-    projection = camera.GetProjectionMatrix(screenWidth, screenHeight);
-    
     while (!glfwWindowShouldClose(window)) {
         GLfloat currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -91,21 +115,43 @@ int main(int argc, const char * argv[]) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         // Render
-        uvMaterial.UseProgram(textureShader);
+        stdMaterial.UseProgram(stdShader);
+        glUniform3f(glGetUniformLocation(stdShader, "dirLight.direction"), 1.2f, -2.0f, -0.8f);
+        glUniform3f(glGetUniformLocation(stdShader, "dirLight.ambient"), 0.2f, 0.2f, 0.2f);
+        glUniform3f(glGetUniformLocation(stdShader, "dirLight.diffuse"), 0.8f, 0.8f, 0.8f);
+        glUniform3f(glGetUniformLocation(stdShader, "dirLight.specular"), 1.0f, 1.0f, 1.0f);
+        glUniform3f(glGetUniformLocation(stdShader, "viewPos"), camera.GetPosition().x, camera.GetPosition().y, camera.GetPosition().z);
         view = camera.GetViewMatrix();
-        model = glm::mat4();
-        uvMaterial.SetProperty(projection, view, model);
-        planeMesh.Render(&uvMaterial);
         
-        model = glm::mat4();
-        model = glm::translate(model, glm::vec3(-1.2f, 0.f, 0.f));
-        uvMaterial.SetProperty(projection, view, model);
-        spheremesh.Render(&uvMaterial);
+        stdMaterial.SetProperty(projection, view, model[0]);
+        cubeMesh.Render(&stdMaterial);
+        stdMaterial.SetProperty(projection, view, model[1]);
+        cubeMesh.Render(&stdMaterial);
+        stdMaterial.SetProperty(projection, view, model[2]);
+        spheremesh.Render(&stdMaterial);
+        stdMaterial.SetProperty(projection, view, model[3]);
+        spheremesh.Render(&stdMaterial);
+        stdMaterial.SetProperty(projection, view, model[4]);
+        planeMesh.Render(&stdMaterial);
         
-        model = glm::mat4();
-        model = glm::translate(model, glm::vec3(1.2f, 0.f, 0.f));
-        uvMaterial.SetProperty(projection, view, model);
-        cubeMesh.Render(&uvMaterial);
+        renderTexture.Bind();
+        glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        stdMaterial.SetProperty(projection, view, model[0]);
+        cubeMesh.Render(&stdMaterial);
+        stdMaterial.SetProperty(projection, view, model[1]);
+        cubeMesh.Render(&stdMaterial);
+        stdMaterial.SetProperty(projection, view, model[2]);
+        spheremesh.Render(&stdMaterial);
+        stdMaterial.SetProperty(projection, view, model[3]);
+        spheremesh.Render(&stdMaterial);
+        stdMaterial.SetProperty(projection, view, model[4]);
+        planeMesh.Render(&stdMaterial);
+        renderTexture.Unbind();
+        
+        baseMaterial.UseProgram(baseShader);
+        baseMaterial.SetProperty(projection, view, model[5]);
+        planeMesh.Render(&baseMaterial);
         
         glfwSwapBuffers(window);
     }

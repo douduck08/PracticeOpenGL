@@ -40,6 +40,10 @@ public:
         return glm::lookAt(this->position, this->position + this->forward, this->up);
     }
     
+    glm::vec3 GetPosition () {
+        return this->position;
+    }
+    
     void Translate (glm::vec3 movement, bool inWorldSpace = false) {
         if (inWorldSpace) {
             position += movement;

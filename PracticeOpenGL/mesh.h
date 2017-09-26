@@ -141,11 +141,11 @@ public:
             for (int i = 0; i < x; i++) {
                 GLuint leftbot = i + j * (x + 1);
                 mesh.triangles.push_back(leftbot);
-                mesh.triangles.push_back(leftbot + x + 1);
-                mesh.triangles.push_back(leftbot + 1);
                 mesh.triangles.push_back(leftbot + 1);
                 mesh.triangles.push_back(leftbot + x + 1);
+                mesh.triangles.push_back(leftbot + 1);
                 mesh.triangles.push_back(leftbot + x + 2);
+                mesh.triangles.push_back(leftbot + x + 1);
             }
         }
         

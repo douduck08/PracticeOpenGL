@@ -117,7 +117,7 @@ public:
         for (int i = 0; i < this->textures.size(); i++) {
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(this->textures[i].type, this->textures[i].name);
-            glUniform1i(glGetUniformLocation(this->program, "texture" + i ), i);
+            glUniform1i(glGetUniformLocation(this->program, "texture" + i), i);
         }
     }
     
