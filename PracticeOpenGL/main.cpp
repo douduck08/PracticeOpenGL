@@ -16,10 +16,12 @@ using namespace std;
 
 #include "camera.h"
 #include "resources.h"
-#include "render_texture.h"
+#include "texture.h"
 #include "material.h"
 #include "mesh.h"
 #include "util.h"
+
+#include "dgb/duck_game_box.h"
 
 const char *TITLE = "Practice OpenGL";
 const GLint WIDTH = 800, HEIGHT = 600;
@@ -77,14 +79,19 @@ int main(int argc, const char * argv[]) {
     //stdMaterial.AddTexture(Resources::LoadTexture("resources/images/uv_diag.png"), GL_TEXTURE_2D);
     stdMaterial.AddTexture(Resources::LoadTexture("resources/images/white.png"), GL_TEXTURE_2D);
     
+    GLuint depthShader = Shader::LoadShader("resources/shaders/depth.vert", "resources/shaders/depth.frag");
+    Material depthMaterial(depthShader);
+    ShadowMap shadowMap(glm::vec3(1.2f, -2.0f, -0.8f));
+    stdMaterial.AddTexture(shadowMap.depthTexture, GL_TEXTURE_2D);
+    
     RenderTexture renderTexture(WIDTH, HEIGHT, screenWidth, screenHeight);
     GLuint baseShader = Shader::LoadShader("resources/shaders/base.vert", "resources/shaders/base.frag");
     Material baseMaterial(baseShader);
     baseMaterial.AddTexture(renderTexture.textureName, GL_TEXTURE_2D);
+    //baseMaterial.AddTexture(shadowMap.depthTexture, GL_TEXTURE_2D);
     
     glm::mat4 model[6], view, projection;
     projection = camera.GetProjectionMatrix(screenWidth, screenHeight);
-    
     model[0] = glm::mat4();
     model[1] = glm::mat4();
     model[1] = glm::translate(model[1], glm::vec3(-1.2f, 0.f, -1.f));
@@ -101,6 +108,14 @@ int main(int argc, const char * argv[]) {
     model[5] = glm::translate(model[5], glm::vec3(0.f, 3.5f, -5.f));
     model[5] = glm::scale(model[5], glm::vec3(4.f, 3.f, 4.f));
     
+    Mesh combinedMesh;
+    combinedMesh.Combine(&cubeMesh, model[0]);
+    combinedMesh.Combine(&cubeMesh, model[1]);
+    combinedMesh.Combine(&spheremesh, model[2]);
+    combinedMesh.Combine(&spheremesh, model[3]);
+    combinedMesh.Combine(&planeMesh, model[4]);
+    combinedMesh.SetupBuffer();
+    
     // Game Loop
     GLfloat deltaTime = 0.0f;
     GLfloat lastFrame = 0.0f;
@@ -115,38 +130,32 @@ int main(int argc, const char * argv[]) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         // Render
+        shadowMap.Bind(depthShader);
+        {
+            glClear(GL_DEPTH_BUFFER_BIT);
+            combinedMesh.Render(&depthMaterial);
+        }
+        shadowMap.Unbind();
+        
         stdMaterial.UseProgram(stdShader);
         glUniform3f(glGetUniformLocation(stdShader, "dirLight.direction"), 1.2f, -2.0f, -0.8f);
         glUniform3f(glGetUniformLocation(stdShader, "dirLight.ambient"), 0.2f, 0.2f, 0.2f);
         glUniform3f(glGetUniformLocation(stdShader, "dirLight.diffuse"), 0.8f, 0.8f, 0.8f);
         glUniform3f(glGetUniformLocation(stdShader, "dirLight.specular"), 1.0f, 1.0f, 1.0f);
         glUniform3f(glGetUniformLocation(stdShader, "viewPos"), camera.GetPosition().x, camera.GetPosition().y, camera.GetPosition().z);
+        glUniformMatrix4fv(glGetUniformLocation(stdShader, "depthBiasMVP"), 1, GL_FALSE, glm::value_ptr(shadowMap.depthBiasMVP));
         view = camera.GetViewMatrix();
         
         stdMaterial.SetProperty(projection, view, model[0]);
-        cubeMesh.Render(&stdMaterial);
-        stdMaterial.SetProperty(projection, view, model[1]);
-        cubeMesh.Render(&stdMaterial);
-        stdMaterial.SetProperty(projection, view, model[2]);
-        spheremesh.Render(&stdMaterial);
-        stdMaterial.SetProperty(projection, view, model[3]);
-        spheremesh.Render(&stdMaterial);
-        stdMaterial.SetProperty(projection, view, model[4]);
-        planeMesh.Render(&stdMaterial);
-        
+        combinedMesh.Render(&stdMaterial);
+
         renderTexture.Bind();
-        glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        stdMaterial.SetProperty(projection, view, model[0]);
-        cubeMesh.Render(&stdMaterial);
-        stdMaterial.SetProperty(projection, view, model[1]);
-        cubeMesh.Render(&stdMaterial);
-        stdMaterial.SetProperty(projection, view, model[2]);
-        spheremesh.Render(&stdMaterial);
-        stdMaterial.SetProperty(projection, view, model[3]);
-        spheremesh.Render(&stdMaterial);
-        stdMaterial.SetProperty(projection, view, model[4]);
-        planeMesh.Render(&stdMaterial);
+        {
+            glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            stdMaterial.SetProperty(projection, view, model[0]);
+            combinedMesh.Render(&stdMaterial);
+        }
         renderTexture.Unbind();
         
         baseMaterial.UseProgram(baseShader);
