@@ -21,12 +21,12 @@ using namespace std;
 #include "mesh.h"
 #include "util.h"
 
-#include "dgb/duck_game_box.h"
+#include "dgb/core.h"
+#include "dgb/util.h"
 
 const char *TITLE = "Practice OpenGL";
 const GLint WIDTH = 800, HEIGHT = 600;
 
-Camera camera(glm::vec3(0.0f, 1.0f, 3.0f));
 const glm::vec3 FORWARD (0.0f, 0.0f, -1.0f);
 const glm::vec3 UP (0.0f, 1.0f, 0.0f);
 const glm::vec3 RIGHT (1.0f, 0.0f, 0.0f);
@@ -41,29 +41,18 @@ void TriggerInput(GLfloat deltaTime);
 void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mode);
 void MouseCallback(GLFWwindow *window, double xPos, double yPos);
 
+dgb::Core gameCore;
+
 int main(int argc, const char * argv[]) {
-    Util::InitGLFW();
-    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, TITLE, nullptr, nullptr);
-    if (nullptr == window ) {
-        cout << "Failed to create GLFW window" << endl;
-        glfwTerminate( );
+    
+    if (!gameCore.CreateWindow(800, 600, "Practice OpenGL")) {
         return EXIT_FAILURE;
     }
     
-    int screenWidth, screenHeight;
-    glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
-    glfwSetKeyCallback(window, KeyCallback);
-    glfwSetCursorPosCallback(window, MouseCallback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetKeyCallback(gameCore.mainWindow, KeyCallback);
+    glfwSetCursorPosCallback(gameCore.mainWindow, MouseCallback);
+    glfwSetInputMode(gameCore.mainWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
-    glfwMakeContextCurrent(window);
-    glewExperimental = GL_TRUE;
-    if (GLEW_OK != glewInit()) {
-        cout << "Failed to initialize GLEW" << endl;
-        return EXIT_FAILURE;
-    }
-    
-    glViewport(0, 0, screenWidth, screenHeight);
     //glEnable( GL_BLEND );
     //glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
     glEnable(GL_DEPTH_TEST);
@@ -84,14 +73,15 @@ int main(int argc, const char * argv[]) {
     ShadowMap shadowMap(glm::vec3(1.2f, -2.0f, -0.8f));
     stdMaterial.AddTexture(shadowMap.depthTexture, GL_TEXTURE_2D);
     
-    RenderTexture renderTexture(WIDTH, HEIGHT, screenWidth, screenHeight);
+    RenderTexture renderTexture(WIDTH, HEIGHT, gameCore.frameBufferWidth, gameCore.frameBufferHeight);
     GLuint baseShader = Shader::LoadShader("resources/shaders/base.vert", "resources/shaders/base.frag");
     Material baseMaterial(baseShader);
     baseMaterial.AddTexture(renderTexture.textureName, GL_TEXTURE_2D);
     //baseMaterial.AddTexture(shadowMap.depthTexture, GL_TEXTURE_2D);
     
+    gameCore.mainCamera.Translate(glm::vec3(0.0f, 1.0f, 3.0f));
     glm::mat4 model[6], view, projection;
-    projection = camera.GetProjectionMatrix(screenWidth, screenHeight);
+    projection = gameCore.mainCamera.GetProjectionMatrix(gameCore.frameBufferWidth, gameCore.frameBufferHeight);
     model[0] = glm::mat4();
     model[1] = glm::mat4();
     model[1] = glm::translate(model[1], glm::vec3(-1.2f, 0.f, -1.f));
@@ -119,15 +109,12 @@ int main(int argc, const char * argv[]) {
     // Game Loop
     GLfloat deltaTime = 0.0f;
     GLfloat lastFrame = 0.0f;
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(gameCore.mainWindow)) {
         GLfloat currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         glfwPollEvents();
         TriggerInput(deltaTime);
-        
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         // Render
         shadowMap.Bind(depthShader);
@@ -137,18 +124,18 @@ int main(int argc, const char * argv[]) {
         }
         shadowMap.Unbind();
         
+        gameCore.mainCamera.BeginRender();
         stdMaterial.UseProgram(stdShader);
         glUniform3f(glGetUniformLocation(stdShader, "dirLight.direction"), 1.2f, -2.0f, -0.8f);
         glUniform3f(glGetUniformLocation(stdShader, "dirLight.ambient"), 0.2f, 0.2f, 0.2f);
         glUniform3f(glGetUniformLocation(stdShader, "dirLight.diffuse"), 0.8f, 0.8f, 0.8f);
         glUniform3f(glGetUniformLocation(stdShader, "dirLight.specular"), 1.0f, 1.0f, 1.0f);
-        glUniform3f(glGetUniformLocation(stdShader, "viewPos"), camera.GetPosition().x, camera.GetPosition().y, camera.GetPosition().z);
+        glUniform3f(glGetUniformLocation(stdShader, "viewPos"), gameCore.mainCamera.GetPosition().x, gameCore.mainCamera.GetPosition().y, gameCore.mainCamera.GetPosition().z);
         glUniformMatrix4fv(glGetUniformLocation(stdShader, "depthBiasMVP"), 1, GL_FALSE, glm::value_ptr(shadowMap.depthBiasMVP));
-        view = camera.GetViewMatrix();
-        
+        view = gameCore.mainCamera.GetViewMatrix();
         stdMaterial.SetProperty(projection, view, model[0]);
         combinedMesh.Render(&stdMaterial);
-
+        
         renderTexture.Bind();
         {
             glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
@@ -162,28 +149,28 @@ int main(int argc, const char * argv[]) {
         baseMaterial.SetProperty(projection, view, model[5]);
         planeMesh.Render(&baseMaterial);
         
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(gameCore.mainWindow);
     }
     
-    glfwTerminate( );
+    glfwTerminate();
     return 0;
 }
 
 void TriggerInput(GLfloat deltaTime) {
     if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP]) {
-        camera.Translate(FORWARD * CAMERA_MOVE_SPEED * deltaTime);
+        gameCore.mainCamera.Translate(FORWARD * CAMERA_MOVE_SPEED * deltaTime);
     }
     
     if (keys[GLFW_KEY_S] || keys[GLFW_KEY_DOWN]) {
-        camera.Translate(-FORWARD * CAMERA_MOVE_SPEED * deltaTime);
+        gameCore.mainCamera.Translate(-FORWARD * CAMERA_MOVE_SPEED * deltaTime);
     }
     
     if (keys[GLFW_KEY_A] || keys[GLFW_KEY_LEFT]) {
-        camera.Translate(-RIGHT * CAMERA_MOVE_SPEED * deltaTime);
+        gameCore.mainCamera.Translate(-RIGHT * CAMERA_MOVE_SPEED * deltaTime);
     }
     
     if (keys[GLFW_KEY_D] || keys[GLFW_KEY_RIGHT]) {
-        camera.Translate(RIGHT * CAMERA_MOVE_SPEED * deltaTime);
+        gameCore.mainCamera.Translate(RIGHT * CAMERA_MOVE_SPEED * deltaTime);
     }
 }
 
@@ -213,5 +200,5 @@ void MouseCallback(GLFWwindow *window, double xPos, double yPos) {
     lastX = xPos;
     lastY = yPos;
     
-    camera.Rotation(xOffset * CAMERA_ROTATION_SENSITIVTY, yOffset * CAMERA_ROTATION_SENSITIVTY);
+    gameCore.mainCamera.Rotation(xOffset * CAMERA_ROTATION_SENSITIVTY, yOffset * CAMERA_ROTATION_SENSITIVTY);
 }

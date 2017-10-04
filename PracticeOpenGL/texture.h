@@ -40,7 +40,7 @@ public:
         glDrawBuffers(1, DrawBuffers);
         
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            Debug::LogError("RenderTexture error");
+            //Debug::LogError("RenderTexture error");
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -83,7 +83,7 @@ public:
         glReadBuffer(GL_NONE);
         
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            Debug::LogError("ShadowMap error");
+            //Debug::LogError("ShadowMap error");
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         

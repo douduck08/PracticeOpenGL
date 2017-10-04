@@ -45,10 +45,12 @@
 		774EB72F1F75094A00794CF4 /* resources */ = {isa = PBXFileReference; lastKnownFileType = folder; path = resources; sourceTree = "<group>"; };
 		774EB7321F751FC900794CF4 /* resources.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = resources.h; sourceTree = "<group>"; };
 		774EB7331F751FDA00794CF4 /* camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = camera.h; sourceTree = "<group>"; };
-		774EB7341F75A7AB00794CF4 /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
 		774EB7371F7658EC00794CF4 /* material.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = material.h; sourceTree = "<group>"; };
 		77BC6E211F7AC62F0026A0BE /* texture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = texture.h; sourceTree = "<group>"; };
-		77BC6E231F7D374F0026A0BE /* dgb */ = {isa = PBXFileReference; lastKnownFileType = folder; path = dgb; sourceTree = "<group>"; };
+		77BC6E251F7EC1DB0026A0BE /* assets.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = assets.h; sourceTree = "<group>"; };
+		77BC6E261F7EC1DB0026A0BE /* core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = core.h; sourceTree = "<group>"; };
+		77BC6E271F7EC1DB0026A0BE /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
+		77BC6E281F7EC9410026A0BE /* game_object.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = game_object.h; sourceTree = "<group>"; };
 		77BF1E531F76D1D3001A7618 /* mesh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mesh.h; sourceTree = "<group>"; };
 		77D67F1C1F750422000F5BEF /* etc1_utils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = etc1_utils.c; path = SOIL2/etc1_utils.c; sourceTree = "<group>"; };
 		77D67F1D1F750422000F5BEF /* etc1_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = etc1_utils.h; path = SOIL2/etc1_utils.h; sourceTree = "<group>"; };
@@ -353,6 +355,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		77BC6E241F7EC1DB0026A0BE /* dgb */ = {
+			isa = PBXGroup;
+			children = (
+				77BC6E251F7EC1DB0026A0BE /* assets.h */,
+				77BC6E261F7EC1DB0026A0BE /* core.h */,
+				77BC6E271F7EC1DB0026A0BE /* util.h */,
+				77BC6E281F7EC9410026A0BE /* game_object.h */,
+			);
+			path = dgb;
+			sourceTree = "<group>";
+		};
 		77D67F1B1F750409000F5BEF /* SOIL2 */ = {
 			isa = PBXGroup;
 			children = (
@@ -404,14 +417,13 @@
 			children = (
 				77D67F1B1F750409000F5BEF /* SOIL2 */,
 				774EB72F1F75094A00794CF4 /* resources */,
-				77BC6E231F7D374F0026A0BE /* dgb */,
+				77BC6E241F7EC1DB0026A0BE /* dgb */,
 				77D96D1A1F7500FE00D6C0FF /* main.cpp */,
 				774EB7371F7658EC00794CF4 /* material.h */,
 				77BF1E531F76D1D3001A7618 /* mesh.h */,
 				774EB7321F751FC900794CF4 /* resources.h */,
 				77BC6E211F7AC62F0026A0BE /* texture.h */,
 				774EB7331F751FDA00794CF4 /* camera.h */,
-				774EB7341F75A7AB00794CF4 /* util.h */,
 			);
 			path = PracticeOpenGL;
 			sourceTree = "<group>";

@@ -40,7 +40,7 @@ private:
         stringstream shaderStream("");
         
         if(!shaderFile.is_open()) {
-            Debug::LogError("<Shader> reading failed: " + string(filePath));
+            //Debug::LogError("<Shader> reading failed: " + string(filePath));
             return "";
         }
         
@@ -63,7 +63,7 @@ private:
         glGetShaderiv(result, GL_COMPILE_STATUS, &success );
         if (!success) {
             glGetShaderInfoLog(result, 512, NULL, infoLog);
-            Debug::LogError("<Shader> compilation failed: " + string(infoLog));
+            //Debug::LogError("<Shader> compilation failed: " + string(infoLog));
         }
         return result;
     }
@@ -75,7 +75,7 @@ private:
         glGetProgramiv(program, GL_LINK_STATUS, &success);
         if (!success) {
             glGetProgramInfoLog(program, 512, NULL, infoLog);
-            Debug::LogError("<Shader> linking failed: " + string(infoLog));
+            //Debug::LogError("<Shader> linking failed: " + string(infoLog));
         }
     }
 };
